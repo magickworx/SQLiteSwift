@@ -3,7 +3,7 @@
  * FILE:	SQLiteDB.swift
  * DESCRIPTION:	SQLite3: SQLiteDB Primitive Class
  * DATE:	Wed, Jul  5 2017
- * UPDATED:	Thu, Jul  6 2017
+ * UPDATED:	Fri, Jul  7 2017
  * AUTHOR:	Kouichi ABE (WALL) / 阿部康一
  * E-MAIL:	kouichi@MagickWorX.COM
  * URL:		http://www.MagickWorX.COM/
@@ -70,7 +70,7 @@ public final class SQLiteDB
 
   var handle: OpaquePointer? = nil
 
-  let queue = DispatchQueue(label: "queue.SQLiteDB", attributes: [])
+  let queue = DispatchQueue(label: "SerialQueue.SQLiteDB", attributes: [])
 
   let dateFormatter = DateFormatter()
 
@@ -158,28 +158,5 @@ extension SQLiteDB
     self.handle = nil
     self.fileURL = nil
     self.filename = nil
-  }
-}
-
-extension SQLiteDB
-{
-  @discardableResult func check(_ resultCode: Int32) throws -> Int32 {
-    guard let error = SQLiteResult(errorCode: resultCode, handle: handle!)
-          else { return resultCode }
-    throw error
-  }
-}
-
-public enum SQLiteResult: Error
-{
-  static let successCodes: Set = [ SQLITE_OK, SQLITE_ROW, SQLITE_DONE ]
-
-  case error(message: String, code: Int32)
-
-  init?(errorCode: Int32, handle: OpaquePointer) {
-    guard !SQLiteResult.successCodes.contains(errorCode) else { return nil }
-
-    let message = String(cString: sqlite3_errmsg(handle))
-    self = .error(message: message, code: errorCode)
   }
 }
