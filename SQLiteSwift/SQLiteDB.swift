@@ -3,7 +3,7 @@
  * FILE:	SQLiteDB.swift
  * DESCRIPTION:	SQLite3: SQLiteDB Primitive Class
  * DATE:	Wed, Jul  5 2017
- * UPDATED:	Fri, Jul  7 2017
+ * UPDATED:	Fri, Aug 11 2017
  * AUTHOR:	Kouichi ABE (WALL) / 阿部康一
  * E-MAIL:	kouichi@MagickWorX.COM
  * URL:		http://www.MagickWorX.COM/
@@ -63,7 +63,7 @@ public final class SQLiteDB
     case memory = 5
   }
 
-  public static let shared: SQLiteDB = SQLiteDB()
+//  public static let shared: SQLiteDB = SQLiteDB()
 
   public internal(set) var fileURL: URL? = nil
   public internal(set) var filename: String? = nil
@@ -72,9 +72,11 @@ public final class SQLiteDB
 
   let queue = DispatchQueue(label: "SerialQueue.SQLiteDB", attributes: [])
 
-  let dateFormatter = DateFormatter()
+  public let dateFormatter = DateFormatter()
 
-  init() {
+  public init() {
+    queue.setSpecific(key: SQLiteDB.queueKey, value: queueContext)
+
     dateFormatter.locale = Locale(identifier: "en_US_POSIX")
     dateFormatter.timeZone = TimeZone(secondsFromGMT: 0)
     dateFormatter.dateFormat = "yyyy-MM-dd HH:mm:ss"
@@ -82,6 +84,65 @@ public final class SQLiteDB
 
   deinit {
     close()
+  }
+
+
+  /*
+   * MARK: - Synchronize
+   */
+  fileprivate static let queueKey = DispatchSpecificKey<Int>()
+  fileprivate lazy var queueContext: Int = unsafeBitCast(self, to: Int.self)
+
+  func sync<T>(_ block: @escaping () throws -> T) rethrows -> T {
+    var success: T?
+    var failure: Error?
+
+    let box: () -> Void = {
+      do {
+        success = try block()
+      }
+      catch let error {
+        failure = error
+      }
+    }
+    if DispatchQueue.getSpecific(key: SQLiteDB.queueKey) == queueContext {
+      box()
+    }
+    else {
+      queue.sync(execute: box)
+    }
+    if let failure = failure {
+      try { () -> Void in throw failure }()
+    }
+    return success!
+  }
+
+  /*
+   * MARK: - Handlers
+   */
+  // See https://sqlite.org/c3ref/busy_timeout.html
+  public var busyTimeout: Double = 0 { // seconds
+    didSet {
+      sqlite3_busy_timeout(handle, Int32(busyTimeout * 1_000)) // milliseconds
+    }
+  }
+
+  fileprivate typealias BusyHandler = @convention(block) (Int32) -> Int32
+  fileprivate var busyHandler: BusyHandler? = nil
+
+  // See https://sqlite.org/c3ref/busy_handler.html
+  public func busyHandler(_ callback: ((_ tries: Int) -> Bool)?) {
+    guard let callback = callback else {
+      sqlite3_busy_handler(handle, nil, nil)
+      busyHandler = nil
+      return
+    }
+
+    let box: BusyHandler = { callback(Int($0)) ? 1 : 0 }
+    sqlite3_busy_handler(handle, { callback, tries in
+      unsafeBitCast(callback, to: BusyHandler.self)(tries)
+    }, unsafeBitCast(box, to: UnsafeMutableRawPointer.self))
+    busyHandler = box
   }
 }
 
@@ -142,11 +203,16 @@ extension SQLiteDB
 
     if let documentURL = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first {
       let fileURL = documentURL.appendingPathComponent(filename)
-      retval = self.open(storage: .uri(fileURL.absoluteString), mode: mode, readonly: readonly)
-      if retval {
-        self.fileURL = fileURL
-        self.filename = filename
-      }
+      retval = self.open(fileURL, mode: mode, readonly: readonly)
+    }
+    return retval
+  }
+
+  public func open(_ fileURL: URL, mode: JournalMode? = nil, readonly: Bool = false) -> Bool {
+    let retval = self.open(storage: .uri(fileURL.absoluteString), mode: mode, readonly: readonly)
+    if retval {
+      self.fileURL  = fileURL
+      self.filename = fileURL.lastPathComponent
     }
     return retval
   }

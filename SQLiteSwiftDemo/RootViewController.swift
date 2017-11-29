@@ -3,7 +3,7 @@
  * FILE:	RootViewController.swift
  * DESCRIPTION:	SQLiteSwiftDemo: SQLiteDB View Controller
  * DATE:	Fri, Jul  7 2017
- * UPDATED:	Fri, Jul  7 2017
+ * UPDATED:	Mon, Jul 24 2017
  * AUTHOR:	Kouichi ABE (WALL) / 阿部康一
  * E-MAIL:	kouichi@MagickWorX.COM
  * URL:		http://www.MagickWorX.COM/
@@ -51,10 +51,16 @@ class RootViewController: BaseViewController
 
   let sentence: String = 
       "CREATE TABLE user(name TEXT, age INTEGER);" + "\n" +
-      "INSERT INTO user(name, age) VALUES('Alice',19);" + "\n" +
+      "INSERT INTO user(name, age) VALUES('Alice',13);" + "\n" +
       "INSERT INTO user(name, age) VALUES('Becky',17);" + "\n" +
-      "INSERT INTO user(name, age) VALUES('Charlotte',21);"
+      "INSERT INTO user(name, age) VALUES('Charlotte',21);" + "\n" +
+      "INSERT INTO user(name, age) VALUES('Diana',15);" + "\n" +
+      "INSERT INTO user(name, age) VALUES('Elizabeth',19);"
+#if true
   let fetchStatement = "SELECT * FROM user;"
+#else
+  let fetchStatement = "SELECT * FROM user ORDER BY age;"
+#endif
 
   override func setup() {
     super.setup()
