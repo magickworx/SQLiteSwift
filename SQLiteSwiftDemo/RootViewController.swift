@@ -3,7 +3,7 @@
  * FILE:	RootViewController.swift
  * DESCRIPTION:	SQLiteSwiftDemo: SQLiteDB View Controller
  * DATE:	Fri, Jul  7 2017
- * UPDATED:	Mon, Jul 24 2017
+ * UPDATED:	Wed, Nov 29 2017
  * AUTHOR:	Kouichi ABE (WALL) / 阿部康一
  * E-MAIL:	kouichi@MagickWorX.COM
  * URL:		http://www.MagickWorX.COM/
@@ -102,6 +102,7 @@ class RootViewController: BaseViewController
     tableView.estimatedRowHeight = 48
     tableView.allowsSelection = false
     tableView.separatorStyle = .none
+    tableView.contentInsetAdjustmentBehavior = .never
     self.view.addSubview(tableView)
   }
 
@@ -121,7 +122,7 @@ class RootViewController: BaseViewController
 extension RootViewController
 {
   func SQLiteDemo() {
-    let sqlitedb = SQLiteDB.shared
+    let sqlitedb = SQLiteDB()
     if sqlitedb.open(mode: .off) {
       var lines: [String] = []
       sentence.enumerateLines { line, _ in
