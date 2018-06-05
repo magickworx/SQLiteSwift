@@ -3,14 +3,14 @@
  * FILE:	RootViewController.swift
  * DESCRIPTION:	SQLiteSwiftDemo: SQLiteDB View Controller
  * DATE:	Fri, Jul  7 2017
- * UPDATED:	Wed, Nov 29 2017
+ * UPDATED:	Tue, Jun  5 2018
  * AUTHOR:	Kouichi ABE (WALL) / 阿部康一
  * E-MAIL:	kouichi@MagickWorX.COM
  * URL:		http://www.MagickWorX.COM/
- * COPYRIGHT:	(c) 2017 阿部康一／Kouichi ABE (WALL), All rights reserved.
+ * COPYRIGHT:	(c) 2017-2018 阿部康一／Kouichi ABE (WALL), All rights reserved.
  * LICENSE:
  *
- *  Copyright (c) 2017 Kouichi ABE (WALL) <kouichi@MagickWorX.COM>,
+ *  Copyright (c) 2017-2018 Kouichi ABE (WALL) <kouichi@MagickWorX.COM>,
  *  All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
@@ -123,7 +123,7 @@ extension RootViewController
 {
   func SQLiteDemo() {
     let sqlitedb = SQLiteDB()
-    if sqlitedb.open(mode: .off) {
+    if sqlitedb.open(journal: .off) {
       var lines: [String] = []
       sentence.enumerateLines { line, _ in
         lines.append(line)
